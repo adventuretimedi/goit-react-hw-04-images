@@ -1,108 +1,71 @@
-import { Component } from 'react';
+import { useState } from 'react';
+import { ModalProvider } from './Modal/ModalContext';
+import s from './App.css';
 import fetchImagesWithQuery from './Services/api';
 import Searchbar from './Searchbar/Searchbar';
 import ImageGallery from './ImageGallery/ImageGallery';
 import Loader from './Loader/Loader';
-import s from './App.css';
 import Button from './Button/Button';
 import Modal from './Modal/Modal';
 
-class App extends Component {
-  state = {
-    images: [],
-    canLoadMore: false,
-    isLoading: false,
-    modalImage: null,
-    error: null,
-    term: '',
-    page: 1,
-  };
+const App = () => {
+  const [images, setImages] = useState([]);
+  const [canLoadMore, setCanLoadMore] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [term, setTerm] = useState('');
+  const [page, setPage] = useState(1);
+
   // 1) Loading
   // 2) Обробку помилки
   // 3) 404 not found
   // Доки чекаємо на відповідь на HTTP-запит, показуємо індикатор завантаження
-  searchImages = async term => {
-    this.setState({ canLoadMore: false, isLoading: true, page: 1, term });
-    console.log('searching');
-    try {
-      const data = await fetchImagesWithQuery(term);
-      const images = data.hits;
-      const maxImages = data.totalHits;
-      console.log('images', images);
-      this.setState({
-        images,
-        canLoadMore:
-          images.length > 0 && images.length < maxImages ? true : false,
-      });
-    } catch (error) {
-      console.log('error: ', error);
-      this.setState({ error });
-    } finally {
-      console.log('finished searching');
-      this.setState({ isLoading: false });
-    }
-  };
 
-  loadMoreImages = async () => {
-    const nextPage = this.state.page + 1;
-    this.setState({ canLoadMore: false, isLoading: true, page: nextPage });
-    console.log('PAGE', nextPage);
+  const getImages = async (term, page) => {
+    setCanLoadMore(false);
+    setIsLoading(true);
+    setPage(page);
+
+    console.log('searching: ', term, ', page: ', page);
+
     try {
-      const data = await fetchImagesWithQuery(this.state.term, nextPage);
+      const data = await fetchImagesWithQuery(term, page);
       console.log(data.hits);
-      const newImages = [...this.state.images, ...data.hits];
+      const newImages = page === 1 ? data.hits : [...images, ...data.hits];
       const maxImages = data.totalHits;
-      this.setState({
-        images: newImages,
-        canLoadMore: newImages.length < maxImages ? true : false,
-      });
+      setImages(newImages);
+      setCanLoadMore(
+        newImages.length > 0 && newImages.length < maxImages ? true : false
+      );
     } catch (error) {
       console.log('error: ', error);
-      this.setState({ error });
     } finally {
       console.log('finished searching');
-      this.setState({ isLoading: false });
+      setIsLoading(false);
     }
   };
 
-  showModal = modalImage => {
-    console.log('showModal: ', modalImage);
-    this.setState({ modalImage });
+  const searchImages = async term => {
+    setTerm(term);
+    getImages(term, 1);
   };
 
-  closeModal = () => {
-    console.log('close modal');
-    this.setState({ modalImage: null });
+  const loadMoreImages = async () => {
+    getImages(term, page + 1);
   };
 
-  handleKeyDown = e => {
-    if (e.key === 'Escape') {
-      this.closeModal();
-    }
-  };
-
-  componentDidMount() {
-    document.addEventListener('keydown', this.handleKeyDown, false);
-  }
-  componentWillUnmount() {
-    document.removeEventListener('keydown', this.handleKeyDown, false);
-  }
-
-  render() {
-    return (
-      // В методі render за умовою повертаємо розмітку.
-      //  Якщо дані завантажуються, показуємо лоадер, в іншому випадку – список з результатами.
+  return (
+    // В методі render за умовою повертаємо розмітку.
+    //  Якщо дані завантажуються, показуємо лоадер, в іншому випадку – список з результатами.
+    <ModalProvider>
       <div className={s.App}>
-        <Searchbar onSubmit={this.searchImages} />
-        <ImageGallery images={this.state.images} onShowModal={this.showModal} />
-        <Loader isVisible={this.state.isLoading} />
-        {this.state.canLoadMore && <Button onClick={this.loadMoreImages} />}
-        {this.state.modalImage && (
-          <Modal image={this.state.modalImage} onClose={this.closeModal} />
-        )}
+        <Searchbar onSubmit={searchImages} />
+        <ImageGallery images={images} />
+        <Loader isVisible={isLoading} />
+        {canLoadMore && <Button onClick={loadMoreImages} />}
+        <Modal />
       </div>
-    );
-  }
-}
+    </ModalProvider>
+  );
+};
 
 export default App;

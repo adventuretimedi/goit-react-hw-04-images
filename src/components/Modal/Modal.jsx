@@ -1,19 +1,36 @@
-import PropTypes from 'prop-types';
 import s from './Modal.module.css';
+import { useModal } from './ModalContext';
+import { useEffect } from 'react';
 
-const Modal = ({ image, onClose }) => {
-  return (
-    <div className={s.overlay} onClick={onClose}>
+const Modal = () => {
+  const { modalImage, closeModal } = useModal();
+
+  // handle Escape to close modal window
+  useEffect(() => {
+    const handleKeyDown = e => {
+      if (e.key === 'Escape') {
+        closeModal();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+    // eslint-disable-next-line
+  }, []);
+
+  return modalImage !== null ? (
+    <div
+      className={s.overlay}
+      onClick={() => {
+        closeModal();
+      }}
+    >
       <div className={s.modal}>
-        <img src={image.largeImageURL} alt={image.tags} />
+        <img src={modalImage.largeImageURL} alt={modalImage.tags} />
       </div>
     </div>
-  );
-};
-
-Modal.propTypes = {
-  image: PropTypes.object,
-  onClose: PropTypes.func,
+  ) : null;
 };
 
 export default Modal;

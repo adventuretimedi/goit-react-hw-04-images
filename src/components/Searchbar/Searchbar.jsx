@@ -1,42 +1,37 @@
-import { Component } from 'react';
-import s from './Searchbar.module.css';
+import { useState } from 'react';
 import { AiOutlineSearch } from 'react-icons/ai';
+import s from './Searchbar.module.css';
 
-class Searchbar extends Component {
-  state = {
-    input: '',
-  };
+const Searchbar = ({ onSubmit }) => {
+  const [input, setInput] = useState('');
 
-  handleSubmit = e => {
+  const handleSubmit = e => {
     e.preventDefault();
-    this.props.onSubmit(this.state.input);
+    onSubmit(input);
   };
 
-  handleChange = e => {
-    this.setState({ input: e.target.value });
+  const handleChange = e => {
+    setInput(e.target.value);
   };
 
-  render() {
-    return (
-      <header className={s.searchBar}>
-        <form className={s.form} onSubmit={this.handleSubmit}>
-          <button className={s.searchBarButton} type="submit">
-            <AiOutlineSearch className={s.searchIcon} />
-            {/* <span className={s.searchBarButtonLabel}>Search</span> */}
-          </button>
-          <input
-            className={s.searchBarInput}
-            type="text"
-            value={this.state.input}
-            onChange={this.handleChange}
-            autoComplete={'off'}
-            autoFocus={true}
-            placeholder="Search images and photos"
-          />
-        </form>
-      </header>
-    );
-  }
-}
+  return (
+    <header className={s.searchBar}>
+      <form className={s.form} onSubmit={handleSubmit}>
+        <button className={s.searchBarButton} type="submit">
+          <AiOutlineSearch className={s.searchIcon} />
+        </button>
+        <input
+          className={s.searchBarInput}
+          type="text"
+          value={input}
+          onChange={handleChange}
+          autoComplete={'off'}
+          autoFocus={true}
+          placeholder="Search images and photos"
+        />
+      </form>
+    </header>
+  );
+};
 
 export default Searchbar;
